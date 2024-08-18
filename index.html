@@ -215,13 +215,14 @@
         </div>
       </details>
       <button :class="{ loading }" :disabled="loading || isValidated()" @click="submit($refs, $nextTick)">生成</button>
+      <div id="qrcode" style="text-align: center; margin-top: 1rem;"></div> <!-- 添加二维码显示区域 -->
     </main>
     <footer>
       基于 <a href="https://github.com/harrisonwang/linklet" target="_blank">Cloudflare</a> 的短链生成器<br>
       Build By Ckar
     </footer>
     <script src="asset/js/alpine.js"></script>
-    <script>
+    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script> <!-- 引入二维码生成库 -->    <script>
       const app = {
         url: '',
         slug: '',
@@ -265,6 +266,10 @@
               $nextTick(() => {
                 $refs.url.select()
                 this.alert = { type: 'success', message: `链接 ${document.execCommand('Copy') ? '复制' : '生成'} ` }
+                // 生成二维码
+                QRCode.toCanvas(document.getElementById('qrcode'), this.url, function (error) {
+                  if (error) console.error(error)
+                })
               })
             })
             .catch(e => {
