@@ -200,6 +200,22 @@
           transform: rotate(360deg);
         }
       }
+
+      .qrcode-card {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 1rem;
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: .25rem;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      #qrcode {
+        text-align: center;
+      }
     </style>
   </head>
   <body>
@@ -215,14 +231,17 @@
         </div>
       </details>
       <button :class="{ loading }" :disabled="loading || isValidated()" @click="submit($refs, $nextTick)">生成</button>
-      <div id="qrcode" style="text-align: center; margin-top: 1rem;"></div> <!-- 添加二维码显示区域 -->
+      <div class="qrcode-card">
+        <div id="qrcode"></div> <!-- 添加二维码显示区域 -->
+      </div>
     </main>
     <footer>
       基于 <a href="https://github.com/harrisonwang/linklet" target="_blank">Cloudflare</a> 的短链生成器<br>
       Build By Ckar
     </footer>
     <script src="asset/js/alpine.js"></script>
-    <script src="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script> <!-- 引入二维码生成库 -->    <script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script> <!-- 引入二维码生成库 -->
+    <script>
       const app = {
         url: '',
         slug: '',
@@ -264,18 +283,18 @@
               this.url = res.link
 
               $nextTick(() => {
-            $refs.url.select()
-            this.alert = { type: 'success', message: `链接 ${document.execCommand('Copy') ? '复制' : '生成'} ` }
-            // 生成二维码
-            new QRCode(document.getElementById('qrcode'), this.url)
-          })
-        })
-        .catch(e => {
-          this.alert = { type: 'error', message: e.message }
-          this.loading = false
-        })
-    }
-  }
-</script>
+                $refs.url.select()
+                this.alert = { type: 'success', message: `链接 ${document.execCommand('Copy') ? '复制' : '生成'} ` }
+                // 生成二维码
+                new QRCode(document.getElementById('qrcode'), this.url)
+              })
+            })
+            .catch(e => {
+              this.alert = { type: 'error', message: e.message }
+              this.loading = false
+            })
+        }
+      }
+    </script>
   </body>
 </html>
