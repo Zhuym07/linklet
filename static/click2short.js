@@ -1,12 +1,12 @@
 // shortenurl.js
 document.addEventListener('DOMContentLoaded', function() {
-    // 获取当前脚本的URL
+    // Get the URL of the current script
     const scriptElement = document.currentScript;
-    const scriptUrl = new URL(scriptElement.src);
+    const scriptUrl = scriptElement.src ? new URL(scriptElement.src) : null;
     const baseUrl = scriptUrl.origin;
 
     const button = document.createElement('button');
-    button.textContent = '生成短网址并复制';
+    button.textContent = 'Generate Short URL and Copy';
     button.id = 'shortenBtn';
     document.body.appendChild(button);
 
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.appendChild(message);
 
     button.addEventListener('click', function() {
-        fetch(`${baseUrl}/create`, {  // 动态构建请求URL
+        fetch(`${baseUrl}/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: window.location.href })
@@ -24,13 +24,13 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             const shortUrl = `${baseUrl}/${data.shortUrl}`;
             navigator.clipboard.writeText(shortUrl).then(() => {
-                message.textContent = '短链接已复制: ' + shortUrl;
+                message.textContent = 'Short URL copied: ' + shortUrl;
             }).catch(() => {
-                message.textContent = '复制失败: ' + shortUrl;
+                message.textContent = 'Copy failed: ' + shortUrl;
             });
         })
         .catch(() => {
-            message.textContent = '生成短链接失败';
+            message.textContent = 'Failed to generate short URL';
         });
     });
 });
