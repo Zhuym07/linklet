@@ -1,41 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-    <title>404 - Page Not Found</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            padding: 30px;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-
-        p {
-            font-size: 18px;
-            margin-bottom: 30px;
-        }
-
-        a {
-            color: #007bff;
-            text-decoration: none;
-        }
-    </style>
-</head>
-
-<body>
-    <h1>404 - Page Not Found</h1>
-    <p>Sorry, the page you are looking for does not exist.</p>
-    <p>Please check if you have entered the correct URL.</p>
-</body>
-
+<!DOCTYPE html>  
+<html>  
+<head>  
+    <meta charset="utf-8">  
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">  
+    <meta name="viewport" content="width=device-width, initial-scale=1">  
+   
+    <title>404 - 页面未找到</title>  
+       
+    <style type="text/css">  
+    body {  
+        background-color: #0099CC;  
+        color: #FFFFFF;  
+        font-family: Microsoft Yahei, "Helvetica Neue", Helvetica, Hiragino Sans GB, WenQuanYi Micro Hei, sans-serif;  
+        margin-left: 100px;  
+    }  
+    .face {  
+        font-size: 100px;  
+    }  
+    p{  
+        font-size: 24px;  
+        padding: 8px;  
+        line-height: 40px;  
+    }  
+    .tips {  
+        font-size: 16px  
+    }  
+       
+    /*针对小屏幕的优化*/  
+    @media screen and (max-width: 600px) {   
+        body{  
+            margin: 0 10px;  
+        }  
+        p{  
+            font-size: 18px;  
+            line-height: 30px;  
+        }  
+        .tips {  
+            display: inline-block;  
+            padding-top: 10px;  
+            font-size: 14px;  
+            line-height: 20px;  
+        }  
+    }  
+    </style>  
+</head>  
+   
+<body>  
+    <script>   
+    var i = 5;  //这里是倒计时的秒数  
+    var intervalid;   
+    intervalid = setInterval("cutdown()", 1000);   
+    function cutdown() {   
+        if (i == 0) {   
+            var currentDomain = window.location.origin;
+            window.location.href = currentDomain;
+            clearInterval(intervalid);   
+        }   
+        document.getElementById("mes").innerHTML = i;   
+        i--;   
+    }  
+    window.onload = cutdown;  
+    </script>  
+    <br>
+    <span class="face">|дﾟ)</span>  
+    <p>当前短网址不存在<br>  
+        <span id="mes"></span> 秒后自动跳转回主页<br>  
+        <span class="tips">如果您想了解更多信息，则可以稍后在线搜索此错误: DOMAIN_NOT_FOUND</span>  
+    </p>  
+</body>  
 </html>

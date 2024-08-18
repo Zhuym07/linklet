@@ -5,7 +5,7 @@
 // Path: functions/create.js
 
 function generateRandomString(length) {
-    const characters = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const characters = '123456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
     let result = '';
 
     for (let i = 0; i < length; i++) {
