@@ -264,20 +264,18 @@
               this.url = res.link
 
               $nextTick(() => {
-                $refs.url.select()
-                this.alert = { type: 'success', message: `链接 ${document.execCommand('Copy') ? '复制' : '生成'} ` }
-                // 生成二维码
-                QRCode.toCanvas(document.getElementById('qrcode'), this.url, function (error) {
-                  if (error) console.error(error)
-                })
-              })
-            })
-            .catch(e => {
-              this.alert = { type: 'error', message: e.message }
-              this.loading = false
-            })
-        }
-      }
-    </script>
+            $refs.url.select()
+            this.alert = { type: 'success', message: `链接 ${document.execCommand('Copy') ? '复制' : '生成'} ` }
+            // 生成二维码
+            new QRCode(document.getElementById('qrcode'), this.url)
+          })
+        })
+        .catch(e => {
+          this.alert = { type: 'error', message: e.message }
+          this.loading = false
+        })
+    }
+  }
+</script>
   </body>
 </html>
