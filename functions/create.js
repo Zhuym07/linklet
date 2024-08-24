@@ -18,16 +18,20 @@ function generateRandomString(length) {
 
 const whitelist = ['zer0code.cn', 'ckar.xyz', 'bilibili.com', 'b23.tv']; // 白名单域名
 
+function isWhitelisted(hostname) {
+    return whitelist.some(domain => hostname.endsWith(domain));
+}
+
 export async function onRequest(context) {
     const requestUrl = new URL(context.request.url);
     const referer = context.request.headers.get('referer');
     const refererUrl = referer ? new URL(referer) : null;
     const dwzpwd = requestUrl.searchParams.get('dwzpwd');
+    const password = context.env.PASSWORD; // 从环境变量中读取密码
 
     if (context.request.method === 'OPTIONS') {
         return new Response(null, {
             headers: {
-                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
                 'Access-Control-Max-Age': '86400', // 24小时
@@ -35,8 +39,13 @@ export async function onRequest(context) {
         });
     }
 
-    if (!refererUrl || (!whitelist.includes(refererUrl.hostname) && dwzpwd !== 'password')) {
-        return new Response('Forbidden', { status: 403 });
+    if (!refererUrl || (!isWhitelisted(refererUrl.hostname) && dwzpwd !== password)) {
+        return new Response(JSON.stringify({ message: 'Forbidden' }), {
+            status: 403,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
     }
 
     const { request, env } = context;
