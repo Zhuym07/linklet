@@ -39,13 +39,32 @@ export async function onRequest(context) {
         });
     }
 
-    if (!refererUrl || (!isWhitelisted(refererUrl.hostname) && inputPassword !== password)) {
-        return new Response(JSON.stringify({ message: 'Forbidden' }), {
+    if (!refererUrl) {
+        return new Response(JSON.stringify({ message: 'Referer header is missing.' }), {
             status: 403,
             headers: {
                 'Content-Type': 'application/json'
             }
         });
+    }
+
+    if (!isWhitelisted(refererUrl.hostname)) {
+        if (!inputPassword) {
+            return new Response(JSON.stringify({ message: 'Password is missing.' }), {
+                status: 403,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+        if (inputPassword !== password) {
+            return new Response(JSON.stringify({ message: 'Incorrect password.' }), {
+                status: 403,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
     }
 
     const { request, env } = context;
