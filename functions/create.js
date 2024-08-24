@@ -1,21 +1,3 @@
-/**
- * @api {post} /create Create
- */
-
-// Path: functions/create.js
-
-function generateRandomString(length) {
-    const characters = '123456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
-    let result = '';
-
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters.charAt(randomIndex);
-    }
-
-    return result;
-}
-
 async function verifyTurnstileToken(token, secretKey) {
     const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
         method: 'POST',
@@ -27,6 +9,16 @@ async function verifyTurnstileToken(token, secretKey) {
 
     const data = await response.json();
     return data.success;
+}
+
+function generateRandomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
 }
 
 export async function onRequest(context) {
