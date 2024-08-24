@@ -19,7 +19,17 @@ function generateRandomString(length) {
 const whitelist = ['zer0code.cn', 'ckar.xyz', 'bilibili.com', 'b23.tv']; // 白名单域名
 
 function isWhitelisted(hostname) {
-    return whitelist.some(domain => hostname.endsWith(domain));
+    return whitelist.some(domain => {
+        const domainParts = domain.split('.').reverse();
+        const hostnameParts = hostname.split('.').reverse();
+
+        for (let i = 0; i < domainParts.length; i++) {
+            if (domainParts[i] !== hostnameParts[i]) {
+                return false;
+            }
+        }
+        return true;
+    });
 }
 
 export async function onRequest(context) {
