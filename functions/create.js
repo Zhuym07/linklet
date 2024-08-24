@@ -1,5 +1,5 @@
-async function verifyTurnstileToken(token, secretKey) {
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+async function verifyHcaptchaToken(token, secretKey) {
+    const response = await fetch('https://hcaptcha.com/siteverify', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -23,9 +23,9 @@ function generateRandomString(length) {
 
 export async function onRequest(context) {
     const { request, env } = context;
-    const { url, slug, password: inputPassword, 'cf-turnstile-response': turnstileToken } = await request.json();
+    const { url, slug, password: inputPassword, 'h-captcha-response': hcaptchaToken } = await request.json();
     const password = env.PASSWORD; // 从环境变量中读取密码
-    const turnstileSecretKey = env.TURNSTILE_SECRET_KEY; // 从环境变量中读取Turnstile密钥
+    const hcaptchaSecretKey = env.HCAPTCHA_SECRET_KEY; // 从环境变量中读取hCaptcha密钥
 
     // 所有创建操作都需要密码验证
     if (!inputPassword) {
@@ -45,9 +45,9 @@ export async function onRequest(context) {
         });
     }
 
-    // 验证Turnstile Token
-    if (!turnstileToken || !(await verifyTurnstileToken(turnstileToken, turnstileSecretKey))) {
-        return new Response(JSON.stringify({ message: 'Turnstile verification failed.' }), {
+    // 验证hCaptcha Token
+    if (!hcaptchaToken || !(await verifyHcaptchaToken(hcaptchaToken, hcaptchaSecretKey))) {
+        return new Response(JSON.stringify({ message: 'hCaptcha verification failed.' }), {
             status: 403,
             headers: {
                 'Content-Type': 'application/json'

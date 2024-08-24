@@ -217,7 +217,7 @@
         text-align: center;
       }
     </style>
-    <link rel="preload" href="https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/cmg/1/rWFtZGJE4Oa38UgkpzLxSaFRrp2i6jLI2EFiVAp7Oms%3D" as="script">
+    <link rel="preload" href="https://js.hcaptcha.com/1/api.js" as="script">
   </head>
   <body>
     <header><h1>短链生成器</h1></header>
@@ -235,7 +235,7 @@
           <small>如果需要，请输入密码</small>
         </div>
       </details>
-      <div class="cf-turnstile" data-sitekey="0x4AAAAAAAh-gDcHa7mIClBT"></div> <!-- 添加验证码 -->
+      <div class="h-captcha" data-sitekey="24f0402c-cbe6-4a9a-bea6-14fc96444d10"></div> <!-- 添加hCaptcha -->
       <button :class="{ loading }" :disabled="loading || isValidated()" @click="submit($refs, $nextTick)">生成</button>
       <div class="qrcode-card">
         <div id="qrcode"></div> <!-- 添加二维码显示区域 -->
@@ -247,7 +247,7 @@
     </footer>
     <script src="asset/js/alpine.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script> <!-- 引入二维码生成库 -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script> <!-- 引入Turnstile验证码库 -->
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script> <!-- 引入hCaptcha库 -->
     <script>
       const app = {
         url: '',
@@ -276,21 +276,14 @@
           if (this.slug) body.slug = this.slug
           if (this.password) body.password = this.password
 
-          // 等待Turnstile验证码加载完成
-          const turnstileElement = document.querySelector('.cf-turnstile iframe');
-          if (!turnstileElement) {
-            this.alert = { type: 'error', message: '验证码加载失败，请重试。' }
-            this.loading = false
-            return
-          }
-
-          const turnstileResponse = turnstileElement.contentWindow.turnstile.getResponse();
-          if (!turnstileResponse) {
+          // 等待hCaptcha加载完成
+          const hcaptchaResponse = hcaptcha.getResponse();
+          if (!hcaptchaResponse) {
             this.alert = { type: 'error', message: '验证码获取失败，请重试。' }
             this.loading = false
             return
           }
-          body['cf-turnstile-response'] = turnstileResponse;
+          body['h-captcha-response'] = hcaptchaResponse;
 
           try {
             const res = await fetch('/create', {
