@@ -312,23 +312,6 @@
           }
         }
       }
-
-      // 修改hCaptcha提示文字
-      window.onload = function() {
-        const observer = new MutationObserver(function(mutations) {
-          mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList') {
-              const hcaptchaLabel = document.querySelector('.h-captcha iframe').contentWindow.document.querySelector('.prompt-text');
-              if (hcaptchaLabel) {
-                hcaptchaLabel.innerText = '我恨人类';
-                observer.disconnect(); // 修改完成后停止观察
-              }
-            }
-          });
-        });
-
-        observer.observe(document.querySelector('.h-captcha'), { childList: true, subtree: true });
-      };
     </script>
   </body>
 </html>
