@@ -16,41 +16,36 @@ function generateRandomString(length) {
     return result;
 }
 
-const whitelist = ['zer0code.cn', 'ckar.xyz', 'bilibili.com', 'b23.tv']; // 白名单域名
-
-function isWhitelisted(hostname) {
-    return whitelist.some(domain => {
-        const domainParts = domain.split('.').reverse();
-        const hostnameParts = hostname.split('.').reverse();
-
-        for (let i = 0; i < domainParts.length; i++) {
-            if (domainParts[i] !== hostnameParts[i]) {
-                return false;
-            }
-        }
-        return true;
+async function verifyTurnstileToken(token, secretKey) {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `secret=${secretKey}&response=${token}`
     });
+
+    const data = await response.json();
+    return data.success;
 }
 
 export async function onRequest(context) {
-    const requestUrl = new URL(context.request.url);
-    const referer = context.request.headers.get('referer');
-    const refererUrl = referer ? new URL(referer) : null;
-    const { url, slug, password: inputPassword } = await context.request.json();
-    const password = context.env.PASSWORD; // 从环境变量中读取密码
+    const { request, env } = context;
+    const { url, slug, password: inputPassword, 'cf-turnstile-response': turnstileToken } = await request.json();
+    const password = env.PASSWORD; // 从环境变量中读取密码
+    const turnstileSecretKey = env.TURNSTILE_SECRET_KEY; // 从环境变量中读取Turnstile密钥
 
-    if (context.request.method === 'OPTIONS') {
-        return new Response(null, {
+    // 所有创建操作都需要密码验证
+    if (!inputPassword) {
+        return new Response(JSON.stringify({ message: 'Password is missing.' }), {
+            status: 403,
             headers: {
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Max-Age': '86400', // 24小时
-            },
+                'Content-Type': 'application/json'
+            }
         });
     }
-
-    if (!refererUrl) {
-        return new Response(JSON.stringify({ message: 'Referer header is missing.' }), {
+    if (inputPassword !== password) {
+        return new Response(JSON.stringify({ message: 'Incorrect password.' }), {
             status: 403,
             headers: {
                 'Content-Type': 'application/json'
@@ -58,26 +53,17 @@ export async function onRequest(context) {
         });
     }
 
-    if (!isWhitelisted(refererUrl.hostname)) {
-        if (!inputPassword) {
-            return new Response(JSON.stringify({ message: 'Password is missing.' }), {
-                status: 403,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-        }
-        if (inputPassword !== password) {
-            return new Response(JSON.stringify({ message: 'Incorrect password.' }), {
-                status: 403,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-        }
+    // 验证Turnstile Token
+    if (!turnstileToken || !(await verifyTurnstileToken(turnstileToken, turnstileSecretKey))) {
+        return new Response(JSON.stringify({ message: 'Turnstile verification failed.' }), {
+            status: 403,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
     }
 
-    const { request, env } = context;
+    // 继续处理URL创建逻辑
     const originurl = new URL(request.url);
     const clientIP = request.headers.get("x-forwarded-for") || request.headers.get("clientIP");
     const userAgent = request.headers.get("user-agent");
@@ -100,11 +86,14 @@ export async function onRequest(context) {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Max-Age': '86400', // 24 hours
     };
-    if (!url) return Response.json({ message: 'Missing required parameter: url.' });
+    if (!url) return new Response(JSON.stringify({ message: 'Missing required parameter: url.' }), {
+        headers: corsHeaders,
+        status: 400
+    });
 
     // url格式检查
     if (!/^https?:\/\/.{3,}/.test(url)) {
-        return Response.json({ message: 'Illegal format: url.' }, {
+        return new Response(JSON.stringify({ message: 'Illegal format: url.' }), {
             headers: corsHeaders,
             status: 400
         });
@@ -112,7 +101,7 @@ export async function onRequest(context) {
 
     // 自定义slug长度检查 2<slug<10 是否不以文件后缀结尾
     if (slug && (slug.length < 2 || slug.length > 10 || /.+\.[a-zA-Z]+$/.test(slug))) {
-        return Response.json({ message: 'Illegal length: slug, (>= 2 && <= 10), or not ending with a file extension.' }, {
+        return new Response(JSON.stringify({ message: 'Illegal length: slug, (>= 2 && <= 10), or not ending with a file extension.' }), {
             headers: corsHeaders,
             status: 400
         });
@@ -121,11 +110,11 @@ export async function onRequest(context) {
     try {
         // 如果自定义slug
         if (slug) {
-            const existUrl = await env.DB.prepare(`SELECT url as existUrl FROM links where slug = '${slug}'`).first();
+            const existUrl = await env.DB.prepare('SELECT url as existUrl FROM links WHERE slug = ?').bind(slug).first();
 
             // url & slug 是一样的。
             if (existUrl && existUrl.existUrl === url) {
-                return Response.json({ slug, link: `${origin}/${slug}` }, {
+                return new Response(JSON.stringify({ slug, link: `${origin}/${slug}` }), {
                     headers: corsHeaders,
                     status: 200
                 });
@@ -133,7 +122,7 @@ export async function onRequest(context) {
 
             // slug 已存在
             if (existUrl) {
-                return Response.json({ message: 'Slug already exists.' }, {
+                return new Response(JSON.stringify({ message: 'Slug already exists.' }), {
                     headers: corsHeaders,
                     status: 200
                 });
@@ -141,11 +130,11 @@ export async function onRequest(context) {
         }
 
         // 目标 url 已存在
-        const existSlug = await env.DB.prepare(`SELECT slug as existSlug FROM links where url = '${url}'`).first();
+        const existSlug = await env.DB.prepare('SELECT slug as existSlug FROM links WHERE url = ?').bind(url).first();
 
         // url 存在且没有自定义 slug
         if (existSlug && !slug) {
-            return Response.json({ slug: existSlug.existSlug, link: `${origin}/${existSlug.existSlug}` }, {
+            return new Response(JSON.stringify({ slug: existSlug.existSlug, link: `${origin}/${existSlug.existSlug}` }), {
                 headers: corsHeaders,
                 status: 200
             });
@@ -153,7 +142,7 @@ export async function onRequest(context) {
         const bodyUrl = new URL(url);
 
         if (bodyUrl.hostname === originurl.hostname) {
-            return Response.json({ message: 'You cannot shorten a link to the same domain.' }, {
+            return new Response(JSON.stringify({ message: 'You cannot shorten a link to the same domain.' }), {
                 headers: corsHeaders,
                 status: 400
             });
@@ -162,15 +151,15 @@ export async function onRequest(context) {
         // 生成随机slug
         const slug2 = slug ? slug : generateRandomString(4);
 
-        const info = await env.DB.prepare(`INSERT INTO links (url, slug, ip, status, ua, create_time) 
-        VALUES ('${url}', '${slug2}', '${clientIP}',1, '${userAgent}', '${formattedDate}')`).run();
+        const info = await env.DB.prepare('INSERT INTO links (url, slug, ip, status, ua, create_time) VALUES (?, ?, ?, 1, ?, ?)')
+            .bind(url, slug2, clientIP, userAgent, formattedDate).run();
 
-        return Response.json({ slug: slug2, link: `${origin}/${slug2}` }, {
+        return new Response(JSON.stringify({ slug: slug2, link: `${origin}/${slug2}` }), {
             headers: corsHeaders,
             status: 200
         });
     } catch (e) {
-        return Response.json({ message: e.message }, {
+        return new Response(JSON.stringify({ message: e.message }), {
             headers: corsHeaders,
             status: 500
         });
