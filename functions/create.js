@@ -26,7 +26,7 @@ export async function onRequest(context) {
     const requestUrl = new URL(context.request.url);
     const referer = context.request.headers.get('referer');
     const refererUrl = referer ? new URL(referer) : null;
-    const dwzpwd = requestUrl.searchParams.get('dwzpwd');
+    const { url, slug, password: inputPassword } = await context.request.json();
     const password = context.env.PASSWORD; // 从环境变量中读取密码
 
     if (context.request.method === 'OPTIONS') {
@@ -39,7 +39,7 @@ export async function onRequest(context) {
         });
     }
 
-    if (!refererUrl || (!isWhitelisted(refererUrl.hostname) && dwzpwd !== password)) {
+    if (!refererUrl || (!isWhitelisted(refererUrl.hostname) && inputPassword !== password)) {
         return new Response(JSON.stringify({ message: 'Forbidden' }), {
             status: 403,
             headers: {
@@ -66,7 +66,6 @@ export async function onRequest(context) {
     };
     const timedata = new Date();
     const formattedDate = new Intl.DateTimeFormat('zh-CN', options).format(timedata);
-    const { url, slug } = await request.json();
     const corsHeaders = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
